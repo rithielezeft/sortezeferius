@@ -1,0 +1,15 @@
+[Unit]
+Description=SorteZeferius API (FastAPI)
+After=network.target mongod.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/sortezeferius/backend
+EnvironmentFile=/opt/sortezeferius/backend/.env
+ExecStart=/opt/sortezeferius/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8025 --workers 1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

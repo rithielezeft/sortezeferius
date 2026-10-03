@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 225 28% 4%;
+    --foreground: 210 40% 98%;
+    --card: 225 25% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 225 25% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 350 100% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 225 22% 15%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 225 22% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 225 22% 15%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 224 20% 21%;
+    --input: 224 20% 21%;
+    --ring: 350 100% 59%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: #090b10;
+  }
+  ::selection { background: rgba(255, 46, 85, 0.35); color: #fff; }
+}
+
+.font-head { font-family: Outfit, system-ui, sans-serif; }
+
+.bg-grid {
+  background-color: #090b10;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 0% 10%, rgba(229, 9, 20, 0.22), transparent 70%),
+    radial-gradient(ellipse 50% 50% at 100% 20%, rgba(20, 184, 166, 0.12), transparent 70%),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+  background-attachment: fixed;
+}
+
+.btn-glow { box-shadow: 0 8px 30px -8px rgba(255, 46, 85, 0.65); }
+
+.text-shine {
+  background: linear-gradient(90deg, #f59e0b, #ff2e55, #f59e0b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine 3s linear infinite;
+}
+@keyframes shine { to { background-position: 200% center; } }
+
+.winner-pop { animation: winnerPop 0.6s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes winnerPop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.arrow-pulse { animation: arrowPulse 1.2s ease-in-out infinite; }
+@keyframes arrowPulse { 50% { filter: drop-shadow(0 0 10px rgba(245,158,11,.9)); } }
+
+.reel-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
