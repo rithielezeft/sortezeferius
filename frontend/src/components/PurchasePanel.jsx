@@ -17,7 +17,8 @@ export default function PurchasePanel({ raffle, onOrder }) {
   const price = Number(raffle?.price || 0);
   const closed = raffle?.status !== "active";
   const subtotal = Math.round(qty * price * 100) / 100;
-  const fee = gateway === "mercadopago" ? Number(raffle?.mp_fee ?? 0.99) : 0;
+  const feePct = Number(raffle?.mp_fee_percent ?? 0.99);
+  const fee = gateway === "mercadopago" ? Math.round((Math.round(subtotal * 100) * Math.round(feePct * 100)) / 10000) / 100 : 0;
 
   useEffect(() => {
     if (raffle?.default_gateway) setGateway(raffle.default_gateway);
@@ -107,7 +108,7 @@ export default function PurchasePanel({ raffle, onOrder }) {
         {fee > 0 && (
           <div className="mb-2 space-y-1 border-b border-[#2a303f] pb-2 text-xs text-slate-400">
             <div className="flex justify-between"><span>{qty} cupom(ns)</span><span data-testid="purchase-subtotal">{brl(subtotal)}</span></div>
-            <div className="flex justify-between"><span>Taxa Mercado Pago</span><span data-testid="purchase-fee">+ {brl(fee)}</span></div>
+            <div className="flex justify-between"><span>Taxa Mercado Pago ({feePct.toLocaleString("pt-BR")}%)</span><span data-testid="purchase-fee">+ {brl(fee)}</span></div>
           </div>
         )}
         <div className="flex items-center justify-between">

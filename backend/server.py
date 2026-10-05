@@ -26,7 +26,14 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '').strip().lower()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'change-me')
 PUBLIC_URL = os.environ.get('PUBLIC_URL', '').rstrip('/')
-MP_FEE = round(float(os.environ.get('MP_FEE', '0.99')), 2)  # taxa repassada ao cliente no Mercado Pago
+# taxa percentual repassada ao cliente no Mercado Pago (ex: 0.99 = 0,99% sobre o valor)
+MP_FEE_PERCENT = float(os.environ.get('MP_FEE_PERCENT', '0.99'))
+MP_FEE_BP = int(round(MP_FEE_PERCENT * 100))  # basis points
+
+
+def mp_fee_for(amount):
+    cents = int(round(float(amount) * 100))
+    return ((cents * MP_FEE_BP * 2 + 10000) // 20000) / 100  # arredonda meio centavo para cima
 
 MP_API = "https://api.mercadopago.com"
 IP_LINK_URLS = [
@@ -151,7 +158,7 @@ def public_raffle(r, stats):
     out = {k: r.get(k) for k in keys}
     out.update(stats)
     out["server_now"] = iso(now())
-    out["mp_fee"] = MP_FEE
+    out["mp_fee_percent"] = MP_FEE_PERCENT
     return out
 
 
@@ -341,7 +348,7 @@ async def create_order(body: OrderIn, request: Request):
         "quantity": body.quantity, "amount": round(body.quantity * float(r["price"]), 2),
         "gateway": body.gateway, "status": "pending", "coupons": [], "source": "site", "created_at": iso(now()),
     }
-    order["fee"] = MP_FEE if body.gateway == "mercadopago" else 0.0
+    order["fee"] = mp_fee_for(order["amount"]) if body.gateway == "mercadopago" else 0.0
     order["total_charged"] = round(order["amount"] + order["fee"], 2)
     if body.gateway == "mercadopago":
         if not s.get("mp_access_token"):

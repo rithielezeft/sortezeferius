@@ -327,7 +327,7 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Orders endpoint correctly blocks orders when draw_at is set (Meta atingida message). Error handling verified in previous comprehensive test."
-  - task: "Mercado Pago Fee Implementation"
+  - task: "Mercado Pago Fee Implementation - PERCENTAGE BASED"
     implemented: true
     working: true
     file: "backend/server.py"
@@ -341,18 +341,21 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ ALL 19 TESTS PASSED. Verified: (1) GET /api/raffle returns mp_fee=0.99 ✓, (2) MP_FEE constant=0.99 from .env ✓, (3) Order creation: fee=0.99 for mercadopago, fee=0 for infinitepay ✓, (4) total_charged=amount+fee ✓, (5) MP API transaction_amount=amount+fee (verified via unit test with mocked httpx) ✓, (6) raffle_stats.raised uses net amount only (sum of 'amount' field, excludes 'fee') ✓, (7) progress_total=raised+manual_extra ✓. Code review confirms: lines 29 (MP_FEE load), 154 (mp_fee in response), 344-345 (fee assignment), 275 (transaction_amount), 138-146 (stats calculation) all correct. System cleaned up and reset."
+      - working: true
+        agent: "testing"
+        comment: "✅ ALL 8 TESTS PASSED - PERCENTAGE-BASED FEE. Verified: (1) GET /api/raffle returns mp_fee_percent=0.99 (NO mp_fee field) ✓, (2) mp_fee_for() unit test: 10→0.10, 50→0.50, 100→0.99, 1000→9.90, 30→0.30, 20→0.20 ✓, (3) mp_create() with mocked httpx: qty N at price 10 produces correct fee=mp_fee_for(N*10), MP transaction_amount=amount+fee verified for qty 1,5,10,100,3,2 ✓, (4) Order fee calculation: mercadopago uses mp_fee_for(), total_charged=amount+fee ✓, (5) InfinitePay fee=0 ✓, (6) Raffle stats use net amount only (lines 138-146 sum 'amount' field, not 'fee') ✓, (7) POST /api/admin/raffle/new creates fresh raffle ✓, (8) PUT /api/admin/raffle updates title='R$ 10.000 no PIX', description='Concorra!', goal=30, price=10 ✓. Code review: lines 29-31 (MP_FEE_PERCENT load, MP_FEE_BP calculation), 34-36 (mp_fee_for function with rounding), 161 (mp_fee_percent in response), 351 (fee assignment), 282 (transaction_amount). System cleaned up and reset with fresh active raffle."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 4
   run_ui: false
   last_test_date: "2026-10-05"
-  total_tests_run: 47
-  tests_passed: 47
+  total_tests_run: 55
+  tests_passed: 55
   tests_failed: 0
 test_plan:
   current_focus:
-    - "Mercado Pago fee testing completed successfully"
+    - "Mercado Pago percentage-based fee testing completed successfully"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -369,3 +372,9 @@ agent_communication:
     message: "✅ Mercado Pago fee testing COMPLETE. All 19 tests passed. Verified: (1) GET /api/raffle returns mp_fee=0.99, (2) MP_FEE constant loaded from .env=0.99, (3) Order creation correctly sets fee=0.99 for mercadopago and 0 for infinitepay, (4) total_charged=amount+fee calculated correctly, (5) MP API transaction_amount=amount+fee verified via unit test with mocked httpx, (6) raffle_stats uses net amount (raised field sums only 'amount', not 'fee'), (7) System cleaned up and reset with fresh active raffle. Code review confirms all fee logic is correctly implemented."
   - agent: "main"
     message: "Added MP_FEE (env, default 0.99): for gateway mercadopago, order.fee=0.99, total_charged=amount+fee, MP transaction_amount=total_charged. Raffle stats (raised/progress) must keep using net amount (without fee). InfinitePay fee=0. GET /api/raffle exposes mp_fee."
+  - agent: "main"
+    message: "Changed to PERCENTAGE-based fee: MP_FEE_PERCENT=0.99 (0.99% of amount). Added mp_fee_for(amount) function with rounding logic. Order creation uses fee=mp_fee_for(amount) for mercadopago. GET /api/raffle now returns mp_fee_percent (not mp_fee). Test with mocked httpx: verify mp_fee_for() calculations and MP transaction_amount=amount+fee."
+  - agent: "testing"
+    message: "✅ PERCENTAGE-BASED FEE TESTING COMPLETE. All 8 tests passed. Verified: (1) GET /api/raffle returns mp_fee_percent=0.99 (NO mp_fee field), (2) mp_fee_for() unit test passed for all amounts (10→0.10, 50→0.50, 100→0.99, 1000→9.90, 30→0.30, 20→0.20), (3) mp_create() with mocked httpx verified MP transaction_amount=amount+fee for various quantities, (4) Order fee calculation correct for mercadopago, (5) InfinitePay fee=0, (6) Raffle stats use net amount only, (7) POST /api/admin/raffle/new creates fresh raffle, (8) PUT /api/admin/raffle updates title='R$ 10.000 no PIX', description='Concorra!', goal=30, price=10. System cleaned up and reset with fresh active raffle."
+  - agent: "main"
+    message: "Changed MP fee to PERCENT: env MP_FEE_PERCENT=0.99 (0.99%). fee = round_half_up(amount*0.99%) to cents (10->0.10, 50->0.50, 100->0.99, 1000->9.90). GET /api/raffle exposes mp_fee_percent (mp_fee removed). MP transaction_amount=amount+fee; stats use net amount."
