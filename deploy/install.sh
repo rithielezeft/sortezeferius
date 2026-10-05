@@ -30,12 +30,18 @@ systemctl daemon-reload
 systemctl enable sortezeferius
 systemctl restart sortezeferius
 
-echo ">> Frontend (build com API relativa /api)"
-cd "$SRC_DIR/frontend"
-if [ ! -d node_modules ]; then sudo -u "$RUN_USER" yarn install --frozen-lockfile || sudo -u "$RUN_USER" yarn install; fi
-sudo -u "$RUN_USER" env REACT_APP_BACKEND_URL="" GENERATE_SOURCEMAP=false NODE_OPTIONS=--max-old-space-size=1536 yarn build
+echo ">> Frontend"
 mkdir -p "$WEB_DIR"
-rsync -a --delete build/ "$WEB_DIR/"
+if [ -f "$SRC_DIR/deploy/frontend-build/index.html" ] && [ "${REBUILD:-0}" != "1" ]; then
+  echo "   usando build pronto (deploy/frontend-build). Para recompilar: sudo REBUILD=1 bash deploy/install.sh"
+  rsync -a --delete "$SRC_DIR/deploy/frontend-build/" "$WEB_DIR/"
+else
+  cd "$SRC_DIR/frontend"
+  sudo -u "$RUN_USER" yarn install --frozen-lockfile || sudo -u "$RUN_USER" yarn install
+  sudo -u "$RUN_USER" env REACT_APP_BACKEND_URL="" GENERATE_SOURCEMAP=false NODE_OPTIONS=--max-old-space-size=1536 yarn build
+  rsync -a --delete build/ "$WEB_DIR/"
+fi
+chown -R www-data:www-data "$WEB_DIR" 2>/dev/null || true
 
 echo ">> Nginx (arquivo próprio, sem tocar nos outros sites)"
 cp "$SRC_DIR/deploy/nginx/sorte.zeferius.com.br.conf" /etc/nginx/sites-available/sorte.zeferius.com.br.conf
