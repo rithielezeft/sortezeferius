@@ -16,6 +16,8 @@ export default function PurchasePanel({ raffle, onOrder }) {
   const [loading, setLoading] = useState(false);
   const price = Number(raffle?.price || 0);
   const closed = raffle?.status !== "active";
+  const subtotal = Math.round(qty * price * 100) / 100;
+  const fee = gateway === "mercadopago" ? Number(raffle?.mp_fee ?? 0.99) : 0;
 
   useEffect(() => {
     if (raffle?.default_gateway) setGateway(raffle.default_gateway);
@@ -101,9 +103,17 @@ export default function PurchasePanel({ raffle, onOrder }) {
           {gwBtn("infinitepay", "InfinitePay", "PIX / Cartão", "border-[#10b981] bg-[#10b981]/15 text-white")}
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-xl border border-[#2a303f] bg-[#0d1018] px-4 py-3">
-        <span className="text-sm text-slate-400">Total</span>
-        <span className="font-head text-2xl font-extrabold text-[#f59e0b]" data-testid="purchase-total">{brl(qty * price)}</span>
+      <div className="rounded-xl border border-[#2a303f] bg-[#0d1018] px-4 py-3" data-testid="purchase-summary">
+        {fee > 0 && (
+          <div className="mb-2 space-y-1 border-b border-[#2a303f] pb-2 text-xs text-slate-400">
+            <div className="flex justify-between"><span>{qty} cupom(ns)</span><span data-testid="purchase-subtotal">{brl(subtotal)}</span></div>
+            <div className="flex justify-between"><span>Taxa Mercado Pago</span><span data-testid="purchase-fee">+ {brl(fee)}</span></div>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-400">Total</span>
+          <span className="font-head text-2xl font-extrabold text-[#f59e0b]" data-testid="purchase-total">{brl(subtotal + fee)}</span>
+        </div>
       </div>
       <Button onClick={submit} disabled={loading || closed} data-testid="buy-coupons-submit-button" className="btn-glow h-12 w-full bg-gradient-to-r from-[#e50914] to-[#ff2e55] text-base font-extrabold text-white hover:opacity-95">
         {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Ticket className="mr-2 h-5 w-5" />}

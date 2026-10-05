@@ -112,7 +112,7 @@ export default function ParticipantsTab({ onChange }) {
                       <span className="block max-w-[220px] truncate font-mono text-[11px] text-slate-500" title={o.coupons.join(", ")}>#{o.coupons.join(" #")}</span>
                     )}
                   </td>
-                  <td className="py-3 pr-3">{brl(o.amount)}</td>
+                  <td className="py-3 pr-3">{brl(o.amount)}{o.fee > 0 && <span className="block text-[10px] text-slate-500">+ taxa {brl(o.fee)}</span>}</td>
                   <td className="py-3 pr-3"><Badge variant="outline" className={ST[o.status]?.c}>{ST[o.status]?.t || o.status}</Badge></td>
                   <td className="py-3 text-right">
                     <div className="flex justify-end gap-1">

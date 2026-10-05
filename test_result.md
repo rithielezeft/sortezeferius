@@ -327,20 +327,34 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Orders endpoint correctly blocks orders when draw_at is set (Meta atingida message). Error handling verified in previous comprehensive test."
+  - task: "Mercado Pago Fee Implementation"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "MP_FEE=0.99 loaded from .env. Order creation sets fee=0.99 for mercadopago, 0 for infinitepay. total_charged=amount+fee. MP transaction_amount=amount+fee. Raffle stats use net amount (without fee)."
+      - working: true
+        agent: "testing"
+        comment: "✅ ALL 19 TESTS PASSED. Verified: (1) GET /api/raffle returns mp_fee=0.99 ✓, (2) MP_FEE constant=0.99 from .env ✓, (3) Order creation: fee=0.99 for mercadopago, fee=0 for infinitepay ✓, (4) total_charged=amount+fee ✓, (5) MP API transaction_amount=amount+fee (verified via unit test with mocked httpx) ✓, (6) raffle_stats.raised uses net amount only (sum of 'amount' field, excludes 'fee') ✓, (7) progress_total=raised+manual_extra ✓. Code review confirms: lines 29 (MP_FEE load), 154 (mp_fee in response), 344-345 (fee assignment), 275 (transaction_amount), 138-146 (stats calculation) all correct. System cleaned up and reset."
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: false
-  last_test_date: "2026-10-03"
-  total_tests_run: 28
-  tests_passed: 28
+  last_test_date: "2026-10-05"
+  total_tests_run: 47
+  tests_passed: 47
   tests_failed: 0
 test_plan:
   current_focus:
-    - "All backend bug fix verification completed"
+    - "Mercado Pago fee testing completed successfully"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 agent_communication:
   - agent: "main"
@@ -349,3 +363,9 @@ agent_communication:
     message: "Bug fix verification complete. All 28 backend tests passed successfully. Key findings: (1) Participant counting correctly uses unique (whatsapp digits + name) among PAID orders of current raffle only. (2) Auto-draw functionality working perfectly - draw_at set when goal reached, orders blocked, auto-draw executes after 180s. (3) Draw results verified - sequence contains only paid participants, no duplicates, winner correctly selected. (4) System left with clean active raffle. Frontend UI testing not performed per system instructions - requires user approval."
   - agent: "main"
     message: "User bug report: participant count wrong; at 100% must show 'Meta atingida! Sorteio em 03:00' countdown and auto-draw; draw must include only real paid participants of the current raffle. Fixes: participants = unique (phone digits, name) among PAID orders of current raffle; sync_goal() sets raffle.draw_at = now+180s when progress_total >= goal (cancels if drops); orders blocked while draw_at set; background loop auto-draws at draw_at (atomic lock status active->drawing->drawn); reel sequence built only from paid coupons of that raffle. Frontend: countdown banner, SORTEANDO badge, purchase panel replaced, live animation auto-opens; admin participants list filters 'Concorrendo' (paid) by default."
+  - agent: "main"
+    message: "Test the new Mercado Pago fee implementation. Verify: 1) GET /api/raffle includes mp_fee=0.99, 2) Order creation with mercadopago gateway sets fee=0.99, total_charged=amount+0.99, MP transaction_amount=amount+fee, 3) InfinitePay orders have fee=0, 4) Raffle stats use net amount (without fee), 5) Clean up and reset raffle."
+  - agent: "testing"
+    message: "✅ Mercado Pago fee testing COMPLETE. All 19 tests passed. Verified: (1) GET /api/raffle returns mp_fee=0.99, (2) MP_FEE constant loaded from .env=0.99, (3) Order creation correctly sets fee=0.99 for mercadopago and 0 for infinitepay, (4) total_charged=amount+fee calculated correctly, (5) MP API transaction_amount=amount+fee verified via unit test with mocked httpx, (6) raffle_stats uses net amount (raised field sums only 'amount', not 'fee'), (7) System cleaned up and reset with fresh active raffle. Code review confirms all fee logic is correctly implemented."
+  - agent: "main"
+    message: "Added MP_FEE (env, default 0.99): for gateway mercadopago, order.fee=0.99, total_charged=amount+fee, MP transaction_amount=total_charged. Raffle stats (raised/progress) must keep using net amount (without fee). InfinitePay fee=0. GET /api/raffle exposes mp_fee."

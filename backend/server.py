@@ -26,6 +26,7 @@ ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '').strip().lower()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 JWT_SECRET = os.environ.get('JWT_SECRET', 'change-me')
 PUBLIC_URL = os.environ.get('PUBLIC_URL', '').rstrip('/')
+MP_FEE = round(float(os.environ.get('MP_FEE', '0.99')), 2)  # taxa repassada ao cliente no Mercado Pago
 
 MP_API = "https://api.mercadopago.com"
 IP_LINK_URLS = [
@@ -150,6 +151,7 @@ def public_raffle(r, stats):
     out = {k: r.get(k) for k in keys}
     out.update(stats)
     out["server_now"] = iso(now())
+    out["mp_fee"] = MP_FEE
     return out
 
 
@@ -225,7 +227,7 @@ async def assign_coupons(order_id):
 
 
 def public_order(o):
-    keys = ["id", "name", "quantity", "amount", "gateway", "status", "coupons", "created_at",
+    keys = ["id", "name", "quantity", "amount", "fee", "total_charged", "gateway", "status", "coupons", "created_at",
             "pix_qr_code", "pix_qr_base64", "ticket_url", "checkout_url"]
     return {k: o.get(k) for k in keys}
 
@@ -270,7 +272,7 @@ async def mp_create(order, token, r):
     payer_email = f"cliente{digits}@sortezeferius.com.br"
     first = order["name"].split(" ")[0]
     body = {
-        "transaction_amount": round(float(order["amount"]), 2),
+        "transaction_amount": round(float(order["amount"]) + float(order.get("fee", 0)), 2),
         "description": f"{r['title']} - {order['quantity']} cupom(ns)",
         "payment_method_id": "pix",
         "external_reference": order["id"],
@@ -339,6 +341,8 @@ async def create_order(body: OrderIn, request: Request):
         "quantity": body.quantity, "amount": round(body.quantity * float(r["price"]), 2),
         "gateway": body.gateway, "status": "pending", "coupons": [], "source": "site", "created_at": iso(now()),
     }
+    order["fee"] = MP_FEE if body.gateway == "mercadopago" else 0.0
+    order["total_charged"] = round(order["amount"] + order["fee"], 2)
     if body.gateway == "mercadopago":
         if not s.get("mp_access_token"):
             raise HTTPException(400, "Mercado Pago não configurado. Contate o organizador.")

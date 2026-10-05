@@ -48,7 +48,7 @@ export default function PaymentDialog({ order, open, onOpenChange, onPaid }) {
             {paid ? "Pagamento confirmado" : "Finalize seu pagamento"}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            {o.quantity} cupom(ns) • <span className="font-bold text-[#f59e0b]">{brl(o.amount)}</span>
+            {o.quantity} cupom(ns){o.fee > 0 && ` + taxa ${brl(o.fee)}`} • <span className="font-bold text-[#f59e0b]">{brl(o.total_charged ?? o.amount)}</span>
           </DialogDescription>
         </DialogHeader>
 
